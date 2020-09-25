@@ -1,20 +1,19 @@
 /* Author : Muhammad Arif Uddin
 GitHub : GitHub.com/arif-un */
 
-let pageX, pageY, primary_tran, primary_curr, popAllow;
+let pageX, pageY, primary_tran, target_tran, popAllow;
 let show = false;
 let target = false;
 let selection = "";
 let lang = ["Afrikaans", "Albanian", "Arabic", "Azerbaijani", "Basque", "Bengali", "Belarusian", "Bulgarian", "Catalan", "Chinese Simplified", "Chinese Traditional", "Croatian", "Czech", "Danish", "Dutch", "English", "Esperanto", "Estonian", "Filipino", "Finnish", "French", "Galician", "Georgian", "German", "Greek", "Gujarati", "Haitian Creole", "Hebrew", "Hindi", "Hungarian", "Icelandic", "Indonesian", "Irish", "Italian", "Japanese", "Kannada", "Korean", "Latin", "Latvian", "Lithuanian", "Macedonian", "Malay", "Maltese", "Norwegian", "Persian", "Polish", "Portuguese", "Romanian", "Russian", "Serbian", "Slovak", "Slovenian", "Spanish", "Swahili", "Swedish", "Tamil", "Telugu", "Thai", "Turkish", "Ukrainian", "Urdu", "Vietnamese", "Welsh", "Yiddish"];
 let langCode = ["af", "sq", "ar", "az", "eu", "bn", "be", "bg", "ca", "zh-CN", "zh-TW", "hr", "cs", "da", "nl", "en", "eo", "et", "tl", "fi", "fr", "gl", "ka", "de", "el", "gu", "ht", "iw", "hi", "hu", "is", "id", "ga", "it", "ja", "kn", "ko", "la", "lv", "lt", "mk", "ms", "mt", "no", "fa", "pl", "pt", "ro", "ru", "sr", "sk", "sl", "es", "sw", "sv", "ta", "te", "th", "tr", "uk", "ur", "vi", "cy", "yi"];
 
-
 //read config
 chrome.storage.sync.get(["primaryTranslate"], result => {
-  primary_tran = result.primaryTranslate == undefined ? "bn" : result.primaryTranslate;
+  primary_tran = result.primaryTranslate == undefined ? "en" : result.primaryTranslate;
 });
-chrome.storage.sync.get(["primaryCurrency"], result => {
-  primary_curr = result.primaryCurrency == undefined ? "BDT" : result.primaryCurrency;
+chrome.storage.sync.get(["targetTranslate"], result => {
+  target_tran = result.targetTranslate == undefined ? "ru" : result.targetTranslate;
 });
 chrome.storage.sync.get(["pop_win"], result => {
   popAllow = result.pop_win == undefined ? false : result.pop_win;
@@ -27,6 +26,7 @@ div.id = "____tooltip";
 div.innerHTML = `<a id="__search"><img title="Search" src='${chrome.runtime.getURL("data/search.png")}'></a>
                  <a id="__copy" ><img title="Copy" src='${chrome.runtime.getURL("data/copy.png")}'></a>
                  <a id="__translate" ><img title="Translate" src='${chrome.runtime.getURL("data/translate.png")}'></a>
+                 <a id="__anki" ><img title="Add to anki" src='${chrome.runtime.getURL("data/plus-icon.png")}'></a>
                 `;
 
 /*  <a id="__currency" ><img src='${chrome.runtime.getURL("data/currency_tk.png")}'></a> */
@@ -75,6 +75,9 @@ window.addEventListener("mouseup", (event) => {
     show = false;
     target = false;
   }
+
+  updateProfileName();
+  translate();
 });
 
 //Search Action 
@@ -203,3 +206,169 @@ function getSelectedTxt() {
 
   return t.trim();
 }
+//__anki
+
+let selectionYt;
+let translationYt;
+let profileName;
+
+function updateProfileName(){
+  // profileName = document.querySelector("html").lang;
+  // profileName = profileName.substring(0, 2);
+  profileName = primary_tran
+}
+
+document.getElementById('__anki').addEventListener('click', () => {
+
+  youtubeLink = getYtLink();
+  selectionYt = selection;
+
+  httpRequestToAnki(selectionYt, translationYt, getYtLink(), false)
+});
+
+function getYtLink() {
+
+  let thumbLink = window.location.href;
+  let link;
+  if (thumbLink.includes("youtube")) {
+    let youtubeId = thumbLink.match(/=[^"&?\/\s]{11}/)[0].replace("=", "");
+    link = "https://www.youtube.com/watch?v=" + youtubeId;
+  }else if  (thumbLink.includes("youglish")) {
+
+    let thumbLink = document.getElementsByClassName("vs-unit slick-slide selected-video slick-active")[0].firstChild.src
+    let youtubeId = thumbLink.match(/\/[^"&?\/\s]{11}\//)[0].match(/[^"&?\/\s]{11}/)[0]
+    link = "https://www.youtube.com/watch?v=" + youtubeId
+  } else {
+    link = null;
+  }
+
+  return link
+
+}
+
+function translate () {
+  if(!selection){
+    console.log("no selection");
+    return
+  }
+
+  let translate_url;
+  let useGoogle = true;
+
+  console.log(profileName);
+
+  let langSource = primary_tran;
+  let langTarget = target_tran;
+
+  if(useGoogle) {
+    translate_url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${langSource}&tl=${langTarget}&dt=t&q=${selection}`;
+  }else {
+    translate_url = `https://dictionary.yandex.net/api/v1/dicservice.json/lookup?key=dict.1.1.20200120T134831Z.fcb4ea0693bf486d.c8f57768820b7afec24833517dd63a3a0dbd3366&lang=${langSource}-${langTarget}&text=${selection}`;
+  }
+
+  fetch(translate_url).then(response => {
+    return response.json();
+  }).then(data => {
+
+    console.log(data);
+    if(useGoogle) {
+      translationYt = data[0][0][0];
+    } else {
+      translationYt = data.def[0].tr[0].text;
+    }
+
+    transltPopUp.innerHTML = `<div><span style="font-weight:bold">${lang[langCode.indexOf(langSource)]} : </span> ${selection}</div>
+    <hr style="margin:8px;height:1px">
+    <div><span style="font-weight:bold">${lang[langCode.indexOf(langTarget)]} : </span> ${translationYt}</div>
+    `;
+    transltPopUp.style.top = pageY + 100 + "px";
+    transltPopUp.style.left = pageX + "px";
+    transltPopUp.style.display = "block";
+    transltPopUp
+  }).catch(err => console.log(err));
+}
+
+function httpRequestToAnki(word, translation, url, shadowingEnable) {
+
+  let deck;
+  let model;
+
+  var myHeaders = new Headers();
+  myHeaders.append("Content-Type", "text/plain;charset=UTF-8");
+  myHeaders.append("Origin", "chrome-extension://bgmdidihfjpekadbhmadmebajbcdbkem");
+
+  if(shadowingEnable) {
+    deck = settings.profiles[profileName].deckShadowing;
+    model = settings.profiles[profileName].modelShadowing;
+  } else {
+    deck = settings.profiles[profileName].deck;
+    model = settings.profiles[profileName].model;
+  }
+
+
+  var body = {
+    "action":"addNote",
+    "version":6,
+    "params":{
+      "note":{
+        "deckName":deck,
+        "modelName":model,
+        "fields":{
+          "word": word,
+          "translation": translation,
+          "URL":url ,
+          "gif":"",
+          "gifAudio":"",
+          "yourLangAudio":"",
+          "targetLangAudio":"",
+          "context":"",
+          "contextTranslation":""
+        },
+        "tags":[
+          ""
+        ]
+      }
+    }
+  };
+
+  var raw = JSON.stringify(body);
+
+  var requestOptions = {
+    method: 'POST',
+    headers: myHeaders,
+    body: raw,
+    redirect: 'follow'
+  };
+
+  fetch("http://localhost:8765/", requestOptions)
+      .then(response => response.text())
+      .then(result => checkResponse(result, word))
+      .catch(error => alert('error', error));
+
+}
+
+function checkResponse(result, word){
+  let parsedResp = JSON.parse(result);
+  if(parsedResp.error != null) {
+    alert(word + ": "+ parsedResp.error)
+  } else {
+    alert("added: " + word)
+  }
+}
+
+let settings = {
+  "profiles": {
+    "nl": {
+      "deck": "Dutch::00. youtube",
+      "deckShadowing": "Outloud::Dutch::01. Video shadowing",
+      "model": "Youtube-Front-Back",
+      "modelShadowing": "Youtube-Front-Back"
+    },
+    "en": {
+      "deck": "Outloud::English::00. youtube",
+      "deckShadowing": "Outloud::English::00. youtube",
+      "model": "Youtube-Back-Front",
+      "modelShadowing": "Youtube-Back-Front"
+    }
+  }
+};

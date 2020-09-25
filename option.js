@@ -2,23 +2,23 @@
 GitHub : GitHub.com/arif-un */
 
 let translate_select = document.getElementById("translate");
-let currency_select = document.getElementById("currency");
+let target_lang_select = document.getElementById("targetLang");
+//let currency_select = document.getElementById("currency");
 let pop_true = document.getElementById('pop-true');
 let pop_false = document.getElementById('pop-false');
 
 //default settings to storage
 chrome.storage.sync.get(["primaryTranslate"], result => {
-  let val = result.primaryTranslate == undefined ? "bn" : result.primaryTranslate;
+  let val = result.primaryTranslate == undefined ? "en" : result.primaryTranslate;
   translate_select.value = val;
   chrome.storage.sync.set({ primaryTranslate: val });
-  // console.log(val);
 });
 
-chrome.storage.sync.get(["primaryCurrency"], result => {
-  let c_val = result.primaryCurrency == undefined ? "BDT" : result.primaryCurrency;
-  currency_select.value = c_val;
-  chrome.storage.sync.set({ primaryCurrency: c_val });
-  // console.log(c_val);
+chrome.storage.sync.get(["targetTranslate"], result => {
+  let val = result.targetTranslate == undefined ? "ru" : result.targetTranslate;
+  target_lang_select.value = val;
+  chrome.storage.sync.set({ targetTranslate: val });
+  // console.log(val);
 });
 
 chrome.storage.sync.get(["pop_win"], result => {
@@ -29,17 +29,21 @@ chrome.storage.sync.get(["pop_win"], result => {
 });
 
 document.getElementById('save').addEventListener("click", () => {
-  val = translate_select.value;
-  c_val = currency_select.value;
+  console.log("save")
+  primaryLang = translate_select.value;
+  targetLang = target_lang_select.value;
+  //c_val = currency_select.value;
   popAllow = pop_true.checked ? true : false;
 
-  chrome.storage.sync.set({ primaryTranslate: val });
-  chrome.storage.sync.set({ primaryCurrency: c_val });
+
+  console.log(primaryLang)
+  console.log(targetLang)
+  chrome.storage.sync.set({ primaryTranslate: primaryLang });
+  chrome.storage.sync.set({ targetTranslate: targetLang });
   chrome.storage.sync.set({ pop_win: popAllow });
 
   let save_alrt = document.getElementById('save-alrt');
 
   save_alrt.style.right = "80px";
   setTimeout(() => { save_alrt.style.right = "-80px"; }, 2000);
-
 });
