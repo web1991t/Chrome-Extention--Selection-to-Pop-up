@@ -23,10 +23,11 @@ chrome.storage.sync.get(["pop_win"], result => {
 // popup element
 let div = document.createElement("div");
 div.id = "____tooltip";
-div.innerHTML = `<a id="__search"><img title="Search" src='${chrome.runtime.getURL("data/search.png")}'></a>
-                 <a id="__copy" ><img title="Copy" src='${chrome.runtime.getURL("data/copy.png")}'></a>
-                 <a id="__translate" ><img title="Translate" src='${chrome.runtime.getURL("data/translate.png")}'></a>
-                 <a id="__anki" ><img title="Add to anki" src='${chrome.runtime.getURL("data/plus-icon.png")}'></a>
+div.innerHTML = `<a id="__search" style="display: none"><img title="Search" src='${chrome.runtime.getURL("data/search.png")}'></a>
+                 <a id="__copy" style="display: none"><img title="Copy" src='${chrome.runtime.getURL("data/copy.png")}'></a>
+                 <a id="__translate" style="display: none"><img title="Translate" src='${chrome.runtime.getURL("data/translate.png")}'></a>
+                 <a id="__anki_a" ><img title="Add to anki active" src='${chrome.runtime.getURL("data/A-16x16.png")}'></a>
+                 <a id="__anki_p" ><img title="Add to anki passive" src='${chrome.runtime.getURL("data/P-16x16.png")}'></a>
                 `;
 
 /*  <a id="__currency" ><img src='${chrome.runtime.getURL("data/currency_tk.png")}'></a> */
@@ -218,12 +219,21 @@ function updateProfileName(){
   profileName = primary_tran
 }
 
-document.getElementById('__anki').addEventListener('click', () => {
+document.getElementById('__anki_a').addEventListener('click', () => {
 
   youtubeLink = getYtLink();
   selectionYt = selection;
 
   httpRequestToAnki(selectionYt, translationYt, getYtLink(), false)
+});
+
+
+document.getElementById('__anki_p').addEventListener('click', () => {
+
+  youtubeLink = getYtLink();
+  selectionYt = selection;
+
+  httpRequestToAnki(selectionYt, translationYt, getYtLink(), true)
 });
 
 function getYtLink() {
@@ -359,16 +369,16 @@ function checkResponse(result, word){
 let settings = {
   "profiles": {
     "nl": {
-      "deck": "Dutch::00. youtube",
-      "deckShadowing": "Outloud::Dutch::01. Video shadowing",
-      "model": "Youtube-Front-Back",
+      "deck": "Outloud::Dutch::youtube active (group)::youtube fresh",
+      "deckShadowing": "Dutch::00. youtube",
+      "model": "Youtube-Back-Front-Mature",
       "modelShadowing": "Youtube-Front-Back"
     },
     "en": {
       "deck": "Outloud::English::00. youtube",
       "deckShadowing": "Outloud::English::00. youtube",
       "model": "Youtube-Back-Front",
-      "modelShadowing": "Youtube-Back-Front"
+      "modelShadowing": "Youtube-Front-Back"
     }
   }
 };
